@@ -14,6 +14,8 @@ cd /d "%~dp0.."
 set PY=.venv\Scripts\python.exe
 set ARGS=--networks light_symsw --evidence-weight 0.25 --extra-features %MODELS%
 if not exist %PY% py -3.11 -m venv .venv || goto :error
+rem A venv made with "uv venv" (README) has no pip: add it
+%PY% -m pip --version > nul 2>&1 || %PY% -m ensurepip || goto :error
 %PY% -m pip install -q -r requirements-pipeline.txt || goto :error
 if "%MODELS%"=="" %PY% scripts\fetch_dfl.py || goto :error
 %PY% scripts\make_submission.py --name dfl_sup_v11 %ARGS% || goto :error
