@@ -10,9 +10,10 @@ probabilities into possession spells, with a turnover detector setting, frame by
 change of team costs. The competition match has labels for five minutes only, so every model learns
 from the **DFL / Sportec open data**: seven Bundesliga matches with corrected tracking and a
 provider possession label, degraded until they look like the ATD. Every design choice was made on
-this DFL validation proxy, scored with the official metric code. The public five minutes and the
-video were used only as a pipeline check and a safety guard fixed in advance. The file regenerates
-bit for bit.
+this DFL validation proxy, scored with the official metric code. No label of the provided game was
+used to train anything, and nobody hand-labelled or hand-corrected anything on it. The public five
+minutes served as a pipeline check and as a dead-ball guard fixed in advance (§3). The file
+regenerates bit for bit.
 
 ---
 
@@ -122,13 +123,26 @@ Four families added to every model's input, all computed from the same (degraded
 | Homography | not used: the ATD is already in pitch metres |
 | Tactical and broadcast video | not used for the labels (ball detection from video was out of reach of our time budget) |
 | Smart Tagging | used by our first, self-trained system; **dropped**: it does not exist on the DFL training data |
-| Public 5-minute ground truth | pipeline check and a guard fixed in advance; never trained on, never used to choose a parameter or a version |
+| Public 5-minute ground truth | pipeline check, and the dead-ball guard of §3; never trained on, never used to fit a parameter. The guard did reject one version (`dfl_sup_v2`, §3) |
 | **DFL / Sportec open data** (CC-BY 4.0) | **used**: tracking, labels and events of 7 matches, for training and validation (`scripts/fetch_dfl.sh`) |
 | Metrica Sports sample data (public) | **validation only**: three matches of the competition's provider, labelled from their events. Adding them to training helped on Metrica but hurt on DFL; dropped |
 
+### Training data
+
+Every labelled dataset the submission uses, and none of it is about the provided game:
+
+| dataset | labels: source, who, how much | use |
+|---|---|---|
+| DFL / Sportec open data (Bassek et al. 2025, CC-BY 4.0, public mirror `pysport/idsse-data`) | 7 Bundesliga matches, full length (about 1 M frames at 25 Hz). Per-frame `BallStatus` and `BallPossession` delivered by the data provider with its corrected tracking, and the provider's event feed (passes, shots, duels, ...), logged by the provider's operators. We relabel them **by algorithm only** (duration rule and event evidence, §1.4); we added no hand labels | training of every model; validation (leave-one-match-out) |
+| Metrica Sports sample data (public, `metrica-sports/sample-data`) | 3 anonymised matches with event data annotated by Metrica; per-frame labels derived by algorithm from those events | validation only; tried as training data and dropped |
+
+On the provided game: no hand labels in any amount, for any purpose. The only labels of it we read
+are the official public five minutes (§3); its Smart Tagging, an automatic annotation, fed our first
+system only and is not used by the submission.
+
 Tried and dropped on the proxy: self-training on pseudo-labels (0.478 vs 0.648); dead ball from the
 self-trained model (0.568 vs 0.648); snapping boundaries onto touches (−0.02); second-stage stacking
-(+0.009, inside the noise); context features for all classes (lost dead balls on the real match);
+(+0.009, inside the noise); context features for all classes (rejected by the dead-ball guard on the real match, §3);
 re-opening short turnovers from a finer decoding (rejected by its rule).
 
 ---
@@ -143,7 +157,11 @@ re-opening short turnovers from a finer decoding (rejected by its rule).
   recall must not fall. Parameter grids chosen by nested leave-one-match-out.
 - **Local guard on the real match**, the same for every version: reproducible file; dead ball 40–50%
   of graded frames; 2–4.5 possessions per minute; public-window dead-ball recall ≥ 0.66 (a known blind
-  spot of the proxy, §6 — a guard, not a score to maximise).
+  spot of the proxy, §6 — a guard, not a score to maximise). It fired once: `dfl_sup_v2`
+  (context features for all three classes) won on the proxy but had public dead-ball recall 0.42,
+  below every one of 608 five-minute DFL windows, so the context was kept for the home/away split
+  only. This is the one place where the public labels influenced a choice; we disclose it because
+  it sits close to the "not a tuning set" line.
 
 | version | change | proxy spellF1 (ev 1.5) | matches improved |
 |---|---|---|---|
@@ -193,7 +211,9 @@ We went through three families of models in about three weeks (25 October – 17
    public window followed, from 0.64 to 0.76.
 
 The public numbers are shown for the story only: with 17 possessions they move by about ±0.09 for
-reasons unrelated to the model, and none of them was used to choose a version.
+reasons unrelated to the model. Apart from the dead-ball guard (§3), none of them was used to choose
+a version; the notebook models of point 2, which did fit weights on them, are not part of the
+submission.
 
 | version | public spellF1 | public macroF1 | proxy spellF1 (ev 1.5) |
 |---|---|---|---|
