@@ -1,0 +1,24 @@
+# The match data is licensed for the competition only and is never committed (see data/README.md).
+data/*
+!data/README.md
+*.mp4
+
+# Outputs: submissions, reports, caches. A submission is labels of the whole match.
+evaluation/results/*.csv
+evaluation/reports/
+evaluation/scoreboard.csv
+external/
+
+# The private ground truth must never be here.
+*_possession_gt.csv
+*_possession_gt_meta.json
+*_possession_gt_reference.csv
+
+# Environment and editors
+.venv/
+__pycache__/
+*.py[cod]
+.idea/
+.vscode/
+.DS_Store
+/The DataFellas.pdf
