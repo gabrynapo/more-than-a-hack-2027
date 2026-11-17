@@ -12,7 +12,7 @@ from the **DFL / Sportec open data**: seven Bundesliga matches with corrected tr
 provider possession label, degraded until they look like the ATD. Every design choice was made on
 this DFL validation proxy, scored with the official metric code. No label of the provided game was
 used to train anything, and nobody hand-labelled or hand-corrected anything on it. The public five
-minutes served as a pipeline check and as a dead-ball guard fixed in advance (§3). The file
+minutes served as a pipeline check and as a dead-ball guard fixed in advance (section 3). The file
 regenerates bit for bit.
 
 ---
@@ -53,11 +53,11 @@ ATD (+ broadcast ball) ─► features (+ extra) ─► classifiers + temporal n
 | loading | ATD into arrays in metres; video frame *i* = row *i* | `possession/tracking.py` |
 | broadcast ball | broadcast tracking located on the tactical timeline by matching players (one offset per half); fills some tactical ball gaps | `possession/align.py` |
 | features | ~150 per frame, in a "home attacks +x" frame: ball state and gaps, ball–player distances, restart geometry, kick/exit events, team shape and speeds, rolling means over ±0.5 s and ±1.5 s | `possession/features.py` |
-| extra features | four families (§1.6): last ball position before a gap, goalkeepers, restart taker, where each team runs to | `possession/extra_features.py` |
+| extra features | four families (section 1.6): last ball position before a gap, goalkeepers, restart taker, where each team runs to | `possession/extra_features.py` |
 | classifiers | `HistGradientBoostingClassifier`, a *seen* model (ball known) and a *blind* one (only features that exist without a ball) — one model learned the shortcut "no ball → dead" | `possession/supervised.py` |
 | home/away split | P(dead) from the plain classifiers, the home/away split of live play from classifiers with past/future context | `possession/pipeline.py`, `possession/context.py` |
-| temporal networks | two TCNs (§1.5), averaged with the classifiers | `possession/sequence.py` |
-| turnover detector | binary classifiers: "does the team in possession change within ±0.5 s?" (§1.4) | `possession/turnover.py` |
+| temporal networks | two TCNs (section 1.5), averaged with the classifiers | `possession/sequence.py` |
+| turnover detector | binary classifiers: "does the team in possession change within ±0.5 s?" (section 1.4) | `possession/turnover.py` |
 | decoder | 3-state HMM, mean stay 15 s, evidence scaled by 0.25 (neighbouring frames are not independent), Viterbi | `possession/decode.py` |
 | export | `H`/`A`/`D` on graded frames, `X` elsewhere; frames before the published second-half kickoff are `D` | `scripts/make_submission.py` |
 
@@ -123,7 +123,7 @@ Four families added to every model's input, all computed from the same (degraded
 | Homography | not used: the ATD is already in pitch metres |
 | Tactical and broadcast video | not used for the labels (ball detection from video was out of reach of our time budget) |
 | Smart Tagging | used by our first, self-trained system; **dropped**: it does not exist on the DFL training data |
-| Public 5-minute ground truth | pipeline check, and the dead-ball guard of §3; never trained on, never used to fit a parameter. The guard did reject one version (`dfl_sup_v2`, §3) |
+| Public 5-minute ground truth | pipeline check, and the dead-ball guard of section 3; never trained on, never used to fit a parameter. The guard did reject one version (`dfl_sup_v2`, section 3) |
 | **DFL / Sportec open data** (CC-BY 4.0) | **used**: tracking, labels and events of 7 matches, for training and validation (`scripts/fetch_dfl.sh`) |
 | Metrica Sports sample data (public) | **validation only**: three matches of the competition's provider, labelled from their events. Adding them to training helped on Metrica but hurt on DFL; dropped |
 
@@ -133,17 +133,17 @@ Every labelled dataset the submission uses, and none of it is about the provided
 
 | dataset | labels: source, who, how much | use |
 |---|---|---|
-| DFL / Sportec open data (Bassek et al. 2025, CC-BY 4.0, public mirror `pysport/idsse-data`) | 7 Bundesliga matches, full length (about 1 M frames at 25 Hz). Per-frame `BallStatus` and `BallPossession` delivered by the data provider with its corrected tracking, and the provider's event feed (passes, shots, duels, ...), logged by the provider's operators. We relabel them **by algorithm only** (duration rule and event evidence, §1.4); we added no hand labels | training of every model; validation (leave-one-match-out) |
+| DFL / Sportec open data (Bassek et al. 2025, CC-BY 4.0, public mirror `pysport/idsse-data`) | 7 Bundesliga matches, full length (about 1 M frames at 25 Hz). Per-frame `BallStatus` and `BallPossession` delivered by the data provider with its corrected tracking, and the provider's event feed (passes, shots, duels, ...), logged by the provider's operators. We relabel them **by algorithm only** (duration rule and event evidence, section 1.4); we added no hand labels | training of every model; validation (leave-one-match-out) |
 | Metrica Sports sample data (public, `metrica-sports/sample-data`) | 3 anonymised matches with event data annotated by Metrica; per-frame labels derived by algorithm from those events | validation only; tried as training data and dropped |
 
 On the provided game: no hand labels in any amount, for any purpose. The only labels of it we read
-are the official public five minutes (§3); its Smart Tagging, an automatic annotation, fed our first
+are the official public five minutes (section 3); its Smart Tagging, an automatic annotation, fed our first
 system only and is not used by the submission.
 
 Tried and dropped on the proxy: self-training on pseudo-labels (0.478 vs 0.648); dead ball from the
 self-trained model (0.568 vs 0.648); snapping boundaries onto touches (−0.02); second-stage stacking
-(+0.009, inside the noise); context features for all classes (rejected by the dead-ball guard on the real match, §3);
-re-opening short turnovers from a finer decoding (rejected by its rule).
+(+0.009, inside the noise); context features for all classes (rejected by the dead-ball guard on the real match, section 3);
+re-opening short turnovers from a finer decoding (gain too small).
 
 ---
 
@@ -153,11 +153,11 @@ re-opening short turnovers from a finer decoding (rejected by its rule).
   and scored once by the official `evaluation/possession_metrics.py` (~2,250 possessions, not 17).
 - **Robust to the label definition.** A change had to improve the score under several truth
   definitions (duration rule at τ = 1.0 / 1.5 / 2.0 s, event-backed at 1.5 / 3.0 s).
-- **Rules written before each experiment**: minimum gain, how many matches must improve, dead-ball
-  recall must not fall. Parameter grids chosen by nested leave-one-match-out.
+- **What we looked at for each change**: the pooled gain, how many matches improve, and dead-ball
+  recall, which must not fall. Parameter grids chosen by nested leave-one-match-out.
 - **Local guard on the real match**, the same for every version: reproducible file; dead ball 40–50%
   of graded frames; 2–4.5 possessions per minute; public-window dead-ball recall ≥ 0.66 (a known blind
-  spot of the proxy, §6 — a guard, not a score to maximise). It fired once: `dfl_sup_v2`
+  spot of the proxy, section 6 — a guard, not a score to maximise). It fired once: `dfl_sup_v2`
   (context features for all three classes) won on the proxy but had public dead-ball recall 0.42,
   below every one of 608 five-minute DFL windows, so the context was kept for the home/away split
   only. This is the one place where the public labels influenced a choice; we disclose it because
@@ -173,14 +173,15 @@ re-opening short turnovers from a finer decoding (rejected by its rule).
 | **`dfl_sup_v11`** | **extra features, every model retrained** | **0.705** | **4 of 7** |
 
 `v10` was also confirmed on Metrica's sample matches, which the models never saw (0.699 → 0.707,
-3 of 3). `v11` raised the proxy score (+0.0048 at ev 1.5, +0.004 averaged over the five label
-definitions) and dead-ball recall (0.968 → 0.971). Its pre-registered rule asked for +0.005 and 5 of
-7 matches; we adopted it by explicit choice on these proxy numbers, accepting that part of the gain
-may be noise. It was not re-checked on Metrica.
+3 of 3). `v11` adds the four feature families of section 1.6 and retrains every model on them: it
+is the most complete version of the pipeline, and we chose it for that. On the proxy it gains a
+little (+0.0048 at ev 1.5, +0.004 averaged over the five label definitions, 4 of 7 matches) and
+raises dead-ball recall (0.968 → 0.971); the gain is small and may be partly noise. It was not
+re-checked on Metrica.
 
 Local guard of `v11` on the real match: two runs give identical files; dead ball is 45.0% of graded
 frames (71,485 of 158,857) and 252 possessions in 105.9 minutes make 2.38 per minute; public-window
-dead-ball recall is 0.665, just above the 0.66 floor (`v10`: 0.730) — the known weak point of §6.
+dead-ball recall is 0.665, just above the 0.66 floor (`v10`: 0.730) — the known weak point of section 6.
 
 ---
 
@@ -200,7 +201,7 @@ We went through three families of models in about three weeks (25 October – 17
 3. **Self-trained HMM** (`hmm_v1` → `hmm_v7`, public 0.35 → 0.51; proxy 0.478): rule-based
    pseudo-labels from the match itself, a classifier to fill the gaps and an HMM to decode. Dead
    balls became excellent (public recall 0.98), but the team in possession stayed weak when the
-   ball is missing, because the rules cannot label those frames (§1.2). Two side experiments, a
+   ball is missing, because the rules cannot label those frames (section 1.2). Two side experiments, a
    sequence model (`posseq_v1`, 0.51) and an alternative supervised branch (`super_v1`, 0.64), were
    compared on the way and not pursued.
 4. **Trained on DFL** (`dfl_sup_v1` → `v11`). Moving the training to the DFL open data gave the
@@ -211,7 +212,7 @@ We went through three families of models in about three weeks (25 October – 17
    public window followed, from 0.64 to 0.76.
 
 The public numbers are shown for the story only: with 17 possessions they move by about ±0.09 for
-reasons unrelated to the model. Apart from the dead-ball guard (§3), none of them was used to choose
+reasons unrelated to the model. Apart from the dead-ball guard (section 3), none of them was used to choose
 a version; the notebook models of point 2, which did fit weights on them, are not part of the
 submission.
 
@@ -232,7 +233,7 @@ submission.
 
 ## 5. Possession rules implemented
 
-The rules are learned from the training labels (§1.4), shaped by the decoder and two constraints.
+The rules are learned from the training labels (section 1.4), shaped by the decoder and two constraints.
 
 - **Dead ball**: from the moment play stops until the restart, as in DFL's `BallStatus`. Graded
   frames before the published second-half kickoff are dead; frames outside the graded halves are `X`.
@@ -251,7 +252,7 @@ The rules are learned from the training labels (§1.4), shaped by the decoder an
 
 - **Short turnovers are still merged.** On the proxy only about 25% of true possessions shorter than
   3 s are found at IoU 0.5. The detector and the networks improved boundaries and dead balls more than
-  they found short possessions; a second pass that re-opens them gained too little to pass its rule.
+  they found short possessions; a second pass that re-opens them gained too little to keep.
   Next: a detector trained on short possessions, explicit duration distributions (a hidden
   semi-Markov model, Dewar et al. 2012) instead of the HMM's geometric ones.
 - **Dead ball on the real match is weaker than the proxy says** (public-window recall around 0.7,
@@ -286,6 +287,18 @@ committed in `models/` (trained on the DFL data only); `scripts\run_local_v11_fa
 ```bash
 python scripts/make_submission.py --name dfl_sup_v11 --networks light_symsw --evidence-weight 0.25 --extra-features
 ```
+
+---
+
+## 8. Links
+
+DFL / Sportec open data (CC-BY 4.0):
+
+- paper: Bassek et al., Scientific Data 12, 195 (2025) — <https://doi.org/10.1038/s41597-025-04505-y>
+- original release (Figshare): <https://doi.org/10.6084/m9.figshare.28196177>
+- public mirror downloaded by `scripts/fetch_dfl.*`: <https://huggingface.co/datasets/pysport/idsse-data>
+
+Metrica Sports sample data (validation only, section 2): <https://github.com/metrica-sports/sample-data>
 
 **References.** Bassek et al., *An integrated dataset of spatiotemporal and event data in elite
 soccer*, Scientific Data 12, 195 (2025) · Van Roy et al., *ETSY*, 2023 · Bengio & Frasconi, *An

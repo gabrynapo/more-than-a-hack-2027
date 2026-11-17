@@ -6,9 +6,9 @@ tuned on the clean data would meet a different world on the real match, so the c
 corrupted with the same defects, at the rates the competition documents and our own aggregate
 measurements report (DATA.md; notebooks/01 summary):
 
-    ball gaps        missing on ~41% of graded frames, in long gaps (median ~10 s), more often
-                     while the ball is dead (~56% missing) than alive (~30%), and more often while
-                     the players are slow (gap_speed_beta)
+    ball gaps        missing on ~41% of graded frames, in long gaps (median ~10 s), at separate
+                     rates while the ball is dead and alive (missing_dead, missing_alive), and more
+                     often while the players are slow (gap_speed_beta)
     ball near lines  the tactical camera rarely sees the ball near or beyond the lines
                      (line_margin_m, line_visible_min)
     ball smoothing   the ATD ball is strongly smoothed: a kick ramps from ~2 to ~20 m/s in ~0.8 s

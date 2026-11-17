@@ -18,6 +18,8 @@ All positions are in the "home attacks +x" frame of possession/features.py.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -108,7 +110,9 @@ def extra_columns(tracking: dict, half: np.ndarray, features: pd.DataFrame) -> p
         pick[valid] = deepest(x[valid], axis=1)
         keeper = np.where(valid[:, None], pos[:, own][np.arange(n), pick], np.nan)
         goal_x = 0.0 if side == "h" else length
-        with np.errstate(invalid="ignore"):
+        # A frame with no tracked opponent gives NaN on purpose: silence nanmin's all-NaN warning.
+        with np.errstate(invalid="ignore"), warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
             out["gk_{}_d_ball".format(side)] = np.linalg.norm(keeper - ball, axis=1)
             out["gk_{}_in_box".format(side)] = ((np.abs(keeper[:, 0] - goal_x) < BOX_DEPTH)
                                                 & (np.abs(keeper[:, 1] - width / 2) < BOX_HALF_WIDTH)).astype(float)
@@ -125,7 +129,8 @@ def extra_columns(tracking: dict, half: np.ndarray, features: pd.DataFrame) -> p
     d_away = np.min(np.where(away[None, :], safe, np.inf), axis=1)
     still = np.nan_to_num(features["ball_still_s"].values.astype(float)) >= STILL_S
     taker = np.where(still & found, near_sign, 0.0)
-    isolation = np.where(taker > 0, d_away - d_home, np.where(taker < 0, d_home - d_away, 0.0))
+    with np.errstate(invalid="ignore"):  # inf - inf on frames without players: zeroed just below
+        isolation = np.where(taker > 0, d_away - d_home, np.where(taker < 0, d_home - d_away, 0.0))
     out["rs_taker"] = taker
     out["rs_isolation"] = np.where(np.isfinite(isolation), np.clip(isolation, -30, 30), 0.0)
     index = np.arange(n)
