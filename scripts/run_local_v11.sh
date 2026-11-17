@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Generate dfl_sup_v11 (v10 with the four extra feature families of possession/extra_features.py,
 # every model retrained on them: docs/MIGLIORAMENTI_SPELLF1.md, section 34.3) twice, check that both
-# runs give the same file, validate it, score it on the public 5 minutes and redraw the comparison
-# with v10. Run it yourself, locally: it reads the restricted data in data/. Prints aggregates only.
+# runs give the same file, validate it and score it on the public 5 minutes. Run it yourself, locally: it reads the restricted data in data/. Prints aggregates only.
 #
 #     bash scripts/run_local_v11.sh
 #
@@ -26,4 +25,3 @@ rm evaluation/results/dfl_sup_v11_rerun.csv
 
 "$PY" evaluation/validate_submission.py evaluation/results/dfl_sup_v11.csv
 "$PY" evaluation/run_evaluation.py | sed -n '/^rank/,/^$/p;/^dfl_sup_v11$/,/abstained/p'
-"$PY" scripts/plot_possessions.py dfl_sup_v11 dfl_sup_v10

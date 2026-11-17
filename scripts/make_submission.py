@@ -1,40 +1,23 @@
-"""Data in, submission out: features -> frame classifiers -> HMM -> CSV.
+"""Data in, submission out: features -> classifiers + temporal networks -> HMM -> CSV.
 
-    bash scripts/fetch_dfl.sh                       # once; public DFL training data
-    python scripts/build_features.py                # once; caches the competition feature table
-    python scripts/make_submission.py               # writes evaluation/results/dfl_sup_v9.csv
+    bash scripts/fetch_dfl.sh                 # once; public DFL training data (Windows: python scripts/fetch_dfl.py)
+    python scripts/make_submission.py         # writes evaluation/results/dfl_sup_v11.csv, the submission
+    python scripts/make_submission.py --model-dir models    # the same file from the committed models
+
+The defaults are the submission, dfl_sup_v11 (REPORT.md): classifiers trained on the DFL open data,
+degraded with the n3 noise and domain-randomised around it, with the extra feature families
+(--extra-features, possession/extra_features.py); dead ball from the plain classifiers, the H/A
+split from classifiers with past/future context (sup+teamcx); event-backed training labels
+(--labels ev); the mean of two temporal networks (--networks light_symsw); Viterbi at evidence
+weight 0.25 with the H/A switching cost set by a turnover detector (--turnover-gamma 1.0).
+Equivalent explicit command:
+
+    python scripts/make_submission.py --name dfl_sup_v11 --networks light_symsw --evidence-weight 0.25 --extra-features
 
 Then validate and score it against the public window (a correctness check, not a selection tool):
 
-    python evaluation/validate_submission.py evaluation/results/dfl_sup_v9.csv
+    python evaluation/validate_submission.py evaluation/results/dfl_sup_v11.csv
     python evaluation/run_evaluation.py
-
-The defaults are the configuration chosen on the DFL validation proxy (docs/MIGLIORAMENTI_SPELLF1.md,
-sections 7-15): classifiers trained on the DFL open data's real labels, degraded with the n3 noise
-(calibrated on label-free statistics of the match) and domain-randomised around it; dead ball from
-the plain classifiers, the H/A split from classifiers with past/future context (sup+teamcx);
-training labels in which short possessions backed by a DFL control event are kept (--labels ev,
-possession/dfl_events.py); Viterbi decoding at evidence weight 0.25 with the H/A switching cost set
-frame by frame by a turnover detector (--turnover-gamma 1.0, possession/turnover.py); the
-probabilities are averaged with the mean of four temporal convolutional networks' (--sequence
---networks all4, possession/sequence.py); no touch snapping (sha256 aaa92d9c..., about 70 min). Other versions
-(FIXED = --turnover-gamma 0 --evidence-weight 0.35 --no-sequence):
-
-    python scripts/make_submission.py --name dfl_sup_v11 --networks light_symsw --extra-features   # submission
-    python scripts/make_submission.py --name dfl_sup_v10 --networks light_symsw   # previous submission
-    python scripts/make_submission.py --name dfl_sup_v8 --networks base   # previous default (f976dd76...)
-    python scripts/make_submission.py --name dfl_sup_v6 --no-sequence     # previous default (963dbcf1...)
-
-    python scripts/make_submission.py --name dfl_sup_v5 FIXED                # previous default (1bee7698...)
-    python scripts/make_submission.py --name dfl_sup_v4 --labels tau FIXED   # (3650f97f...)
-    python scripts/make_submission.py --name dfl_sup_v3 --source sup --labels tau FIXED   # (2ef78eed...)
-    python scripts/make_submission.py --name dfl_sup_v1 --source sup --noise n2 --labels tau FIXED  # (01631bdb...)
-    python scripts/make_submission.py --name dfl_sup_v2 --source sup --noise n2 --context --labels tau FIXED
-    python scripts/make_submission.py --name hyb_v1 --source hybrid --labels tau FIXED   # dead ball from self-training
-    python scripts/make_submission.py --name hmm_v7 --source self --evidence-weight 0.1 --turnover-gamma 0 --refine
-
-v2 (context) wins on the proxy but is not used: on the competition match it loses dead balls far
-beyond anything the proxy produces (docs/MIGLIORAMENTI_SPELLF1.md, section 6).
 """
 
 import argparse
@@ -106,7 +89,7 @@ def possession_count(labels):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--name", default="dfl_sup_v9")
+    parser.add_argument("--name", default="dfl_sup_v11")
     parser.add_argument("--evidence-weight", type=float, default=0.25,
                         help="scale of the frame evidence in the HMM (decode.py)")
     parser.add_argument("--refine", action=argparse.BooleanOptionalAction, default=False,
@@ -126,12 +109,12 @@ if __name__ == "__main__":
                         help="> 0: a turnover detector sets the H/A switching cost (possession/turnover.py)")
     parser.add_argument("--extra-metrica", action=argparse.BooleanOptionalAction, default=False,
                         help="add Metrica's public sample matches to training (possession/metrica_sample.py)")
-    parser.add_argument("--extra-features", action=argparse.BooleanOptionalAction, default=False,
+    parser.add_argument("--extra-features", action=argparse.BooleanOptionalAction, default=True,
                         help="append the four extra feature families (possession/extra_features.py, "
                              "docs/MIGLIORAMENTI_SPELLF1.md section 34); retrains every model")
     parser.add_argument("--sequence", action=argparse.BooleanOptionalAction, default=True,
                         help="sup+teamcx: average in the temporal network (possession/sequence.py)")
-    parser.add_argument("--networks", choices=("base", "all4", "light_symsw", "all4_symsw"), default="all4",
+    parser.add_argument("--networks", choices=("base", "all4", "light_symsw", "all4_symsw"), default="light_symsw",
                         help="with --sequence: one network (base), the mean of four (all4), or the _symsw sets: "
                              "symmetry copies and spell-balanced loss (sequence.ENSEMBLES)")
     parser.add_argument("--tta", action=argparse.BooleanOptionalAction, default=False,

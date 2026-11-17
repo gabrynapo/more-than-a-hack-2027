@@ -62,19 +62,22 @@ python -m pytest tests                      # unit tests, synthetic data only
 | path | content |
 |---|---|
 | `possession/` | the pipeline: loading, features, DFL data and noise, labels, classifiers, networks, decoder |
-| `scripts/` | `make_submission.py`, `build_features.py`, `train_models.py`, `fetch_dfl.*`, the `run_local_v11*` scripts |
+| `scripts/` | `make_submission.py`, `train_models.py`, `fetch_dfl.*`, the `run_local_v11*` scripts |
 | `models/` | the DFL-trained models of `v11` |
 | `evaluation/` | the official scorer, validator and public ground truth (unchanged) |
 | `starter/`, `games.py` | official loaders used by the pipeline (unchanged) |
 | `tests/` | unit tests on synthetic data |
 
 Some docstrings mention development scripts and notes (`scripts/proxy_*.py`,
-`docs/MIGLIORAMENTI_SPELLF1.md`) that stay in our development repository: they hold the validation
-experiments behind each choice and are not needed to regenerate the file.
+`docs/MIGLIORAMENTI_SPELLF1.md`) and the competition's own documents (`DATA.md`, `FAQ.md`, ...).
+The development material held the validation experiments behind each choice and is not part of
+this repository; it is not needed to regenerate the file. The competition documents are in the
+[official repository](https://github.com/metrica-sports/more-than-a-hack-2027).
 
 ## Licence and attribution
 
-`evaluation/`, `starter/`, `games.py` and `data/README.md` come unchanged from
+`evaluation/` (scorer, validator, public ground truth), `starter/`, `games.py` and
+`data/README.md` come unchanged from
 [metrica-sports/more-than-a-hack-2027](https://github.com/metrica-sports/more-than-a-hack-2027),
 © Metrica Sports, MIT licence (see [LICENSE](LICENSE), which also states that the match data is not
 covered). The DFL / Sportec open data used for training is CC-BY 4.0 (Bassek et al., Scientific Data
