@@ -6,6 +6,14 @@ How it works, which assets it uses, the possession rules and the limitations: [R
 
 The match data is licensed for the competition only and is **not** in this repository.
 
+## Competition results
+
+**The DataFellas finished 24th out of 759 teams (top 3.2%)** in Phase 1 of More Than A Hack 2027.
+
+Our official full-match **Spell F1 was 0.646**. Only the top 20 teams advanced to the Innovation Challenge, so we missed qualification by four places.
+
+This full-match score is distinct from the local five-minute public-window evaluation described below.
+
 ## Setup
 
 Python 3.11 and the pinned environment:
